@@ -112,88 +112,13 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         print("No flights found from {} on {}!".format(current_city, current_date))
     next_flights = pd.DataFrame([], columns = full_matrix.columns.values)
     for destination_city in list(viajes_posibles['To']):
-        next_flights += findBestPathGlobMultiHandler(full_matrix, departure_cities, destination_city, \
+        next_flights.append(findBestPathGlobMultiHandler(full_matrix, departure_cities, destination_city, \
                                                      [c for c in ciudades_deseadas if c not in current_city], \
                                                      n_ciudades_a_visitar - 1, fechas[1:])
     # Si no hemos encontrado nada en los siguientes caminos
     one_combination_flights = pd.DataFrame([], columns = full_matrix.columns.values)
     
     print("All the flights found:\n", viajes_posibles)
-
-   
-  while (comb_found < n_combinaciones) and (combination < possible_combinations):
-    print("*****************************************************************")
-    one_combination_flights = pd.DataFrame([], columns = full_matrix.columns.values)
-    visited_cities = departure_cities.copy()
-    current_city = departure_cities.copy()
-
-    # calcula el idx_viaje para el que habrá que hacer excepcion y no elegir el viaje mas barato para generar combinaciones
-    flight_to_except = (combination - 1)%(n_ciudades_a_visitar)
-    index_if_except = math.ceil(float(combination)/(n_ciudades_a_visitar))
-    print('In combination {} we must choose the {} cheaper price for flight {}'
-          .format(combination + 1, index_if_except + 1, flight_to_except + 1))
-
-    # calcula los precios desde la ciudad actual hasta las siguientes
-    discard_comb = False
-    for idx_viaje in range(n_viajes):
-      current_date = fechas[idx_viaje]
-      print('Starting flight {}/{}: from {} on date {}'.format(idx_viaje + 1,n_viajes,current_city, current_date))
-      
-      # Mira si el viaje actual es el último o no
-      if (idx_viaje + 1) < n_viajes:
-        # Si no es el último viaje, además hay que evitar que el destino sea una ciudad ya visitada
-        accepted_cities = [element not in visited_cities for element in full_matrix['To']]     
-      else:
-        # Si es el último viaje, destino tiene que ser un de las ciudades de origen
-        accepted_cities = [element in departure_cities for element in full_matrix['To']]
-      
-      # Mirar destinos posibles teniendo en cuenta lo anterior, la fecha y la ciudad actual
-      filas_viajes_posibles = ([element in current_city for element in full_matrix['From']] & 
-                               (full_matrix['Date'] == current_date) & accepted_cities)
-      
-      # Saca el df con todos los posibles destinos encontrados
-      n_viajes_posibles = np.sum(filas_viajes_posibles)
-      if n_viajes_posibles > 0:
-        viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
-      else:
-        viajes_posibles = pd.DataFrame([], columns = full_matrix.columns.values)
-        discard_comb = True
-        print("No flights found from {} on {}!".format(current_city, current_date))
-      print("All the flights found:\n", viajes_posibles)
-      
-      # Decide si este vuelo es la excepción para generar varias combinaciones y mira si hay suficientes
-      if idx_viaje == flight_to_except:
-        # Comprueba que se hayan encontrado encontrado alternativas suficientes
-        index_lower_price = index_if_except
-        if (index_if_except >= n_viajes_posibles):
-          discard_comb = True
-          print("Not enough flights in combination {} from {} on {} to find another combination!"
-                            .format(combination + 1, current_city, current_date))
-      else:
-        # No es la excepcion o es el vuelo de vuelta
-        index_lower_price = 0
-      print('Choosen flight {} of {} possible trips:\n {}'.
-            format(index_lower_price + 1, n_viajes_posibles, viajes_posibles))
-
-      # Actualiza los datos del mejor vuelo encontrado si la comb es valida
-      if not discard_comb:
-        one_combination_flights.loc[idx_viaje] = viajes_posibles.iloc[index_lower_price].copy()
-        current_city = one_combination_flights['To'].loc[idx_viaje]
-        visited_cities.append(current_city)
-      else:
-        print("Combination {} was discarded".format(combination + 1))
-        break
-      #print("visited cities: ", visited_cities)
-    # comprime la info de todos los vuelos de la combinación encontrada en una única fila
-    print("For combination {} there are the following flights:\n{}".format(combination+1, one_combination_flights))
-    if not discard_comb:
-      all_combinations_flights.loc[comb_found] = compressFlightsToCombination(one_combination_flights)
-      comb_found += 1
-      print("For combination {} there are the following flights:\n{}".format(comb_found, one_combination_flights))
-    combination += 1
-  all_combinations_flights.drop('CodeTo', axis=1, inplace=True)
-  all_combinations_flights.sort_values(["Price"], inplace=True)
-  return all_combinations_flights
 
 
 def findBestPathLocMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, pasajeros, n_combinaciones):
