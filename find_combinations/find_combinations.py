@@ -140,14 +140,25 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                 for index_row_tuple in viajes_posibles.iterrows():
                     possible_flight = index_row_tuple[1]
                     print("Checking successive combinations from:\n{}".format(possible_flight))
-                    # Si no es el ultimo vuelo, 
+                    # devuelve un DF con todas las combinaciones desde current_city
                     #previous_and_current_flights = previous_flights.append(possible_flight)
-                    next_combination = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight['To'], \
+                    next_combinations = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
-                    print("Next combination from {} we get:\n{}".format(current_city, next_combination))
-                    combinations.loc[-1] = insertFlightInCombination(next_combination, possible_flight)
-                    print("Combination after inserting current city {}:\n{}".format(current_city, combinations.loc[-1]))
+                    print("Next combination from {} we get:\n{}".format(current_city, next_combinations))
+                    # Añade la info de possible_flight a las siguientes combinaciones encontradas
+                    if len(next_combinations):
+                        for next_flight_tuple in next_combinations.iterrows():
+                            next_flight = next_flight_tuple[1]
+                            print("Appending next flight to final combinations found:\n{}".format(next_flight))
+                            combinations.append(insertFlightInCombination(next_flight, possible_flight), ignore_index = True)
+                            print("Combinations after next_flight appended:\n{}".format(combinations))
+                        combinations.loc[-1] = insertFlightInCombination(next_combinations, possible_flight)
+                        print("Combination after inserting current city {}:\n{}".format(current_city, combinations.loc[-1]))
+                    else:
+                        print("Anything found in successive flights from {} on {}".format(current_city, current_date))
+                    # Añade las combinaciones encontradas al resultado final
+                    
             # devolver una combinacion: si es ultimo viaje hará append en empty DF
             return combinations
         print("All the flights found:\n", viajes_posibles)
