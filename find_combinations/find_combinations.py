@@ -33,11 +33,12 @@ def insertFlightInCombination(combinations_flights, flight):
     combinations_flights["From"] = flight["From"]
     print("Combination after inserting Price and From:\n{}".format(combinations_flights))
     for column in ["To", "Hour", "Date"]:
-        print("Going to insert {} into {} colum".format(flight[column], column))
+        print("Going to insert '{}' value into '{}' colum".format(flight[column], column))
         combinations_flights[column].insert(0, flight[column])
     combinations_flights["Id"].insert(0,flight["Id"].replace("'","") + "%7C")
     route_columns = ['From', 'To', 'Date', 'Hour', 'Price']
     combinations_flights["Route"].insert(0, flight[route_columns].values.tolist())
+    print("Combination after inserting all the flight info:\n".format(combinations_flights))
     return combinations_flights
     
 # Convertir todos los vuelos del DF de una combinación a una única fila
@@ -128,12 +129,12 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         if n_viajes_posibles <= 0:
             # Si no hay viajes posibles, devuelve DF vació y avis a anteriores llamadas que no guarden la combinación
             print("No flights found from {} on {}!".format(current_city, current_date))
-            return pd.DataFrame([["", [], [], [], 0, "", []]], columns = combination_columns)
+            return pd.DataFrame([], columns = combination_columns)
         else:
             # Si hay viajes posibles, haz la llamad recursiva de los siguientes
             viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
             print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
-            combinations = pd.DataFrame([["", [], [], [], 0, "", []]], columns = combination_columns)
+            combinations = pd.DataFrame([], columns = combination_columns)
             if n_ciudades_a_visitar > 1:
             #    if possible_flight['To'] not in departure_cities:
                 # si todavía nos quedan viajes por hacer, hacer llamadas recursivas
@@ -145,9 +146,9 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                     next_combinations = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
-                    print("Next combination from {} we get:\n{}".format(current_city, next_combinations))
+                    print("Next {} combinations from {} are:\n{}".format(len(next_combinations), current_city, next_combinations))
                     # Añade la info de possible_flight a las siguientes combinaciones encontradas
-                    if len(next_combinations):
+                    if len(next_combinations) > 0:
                         for next_flight_tuple in next_combinations.iterrows():
                             next_flight = next_flight_tuple[1]
                             print("Appending next flight to final combinations found:\n{}".format(next_flight))
@@ -158,8 +159,11 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                     else:
                         print("Anything found in successive flights from {} on {}".format(current_city, current_date))
                     # Añade las combinaciones encontradas al resultado final
-                    
+            else:
+                combin
+                combinations = pd.DataFrame([["",[], [] ]], columns = combination_columns), viajes_posibles
             # devolver una combinacion: si es ultimo viaje hará append en empty DF
+            print("Combinations found from {}:\n{}".format(current_city, combinations))
             return combinations
         print("All the flights found:\n", viajes_posibles)
     #initial_flights = pd.DataFrame([], columns = full_matrix.columns.values)
