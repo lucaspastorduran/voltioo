@@ -28,21 +28,21 @@ def addDays(fecha,days):
   return datetime.datetime.strftime(fecha2, "%d/%m/%Y")
 
 def insertFlightInCombination(combinations_flights, flight):
-    #print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
+    print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
     combinations_flights["Price"] += flight["Price"]
-    #print("Added {} to 'Price' colum. Result is: {}".format(flight['Price'], combinations_flights['Price']))
-    #print("Changing 'From' colum from '{}' to '{}'".format(combinations_flights["From"], flight["From"]))
+    print("Added {} to 'Price' colum. Result is: {}".format(flight['Price'], combinations_flights['Price']))
+    print("Changing 'From' colum from '{}' to '{}'".format(combinations_flights["From"], flight["From"]))
     combinations_flights["From"] = flight["From"]
     for column in ["To", "Hour", "Date"]:
         combinations_flights[column].insert(0, flight[column])
-        #print("Inserted '{}' into colum '{}'. Result is: {}".format(flight[column], column, combinations_flights[column]))
+        print("Inserted '{}' into colum '{}'. Result is: {}".format(flight[column], column, combinations_flights[column]))
     if combinations_flights["Id"] == "":
         combinations_flights["Id"] = flight["Id"].replace("'","")
     else:
         combinations_flights["Id"] = flight["Id"].replace("'","") + "%7C" + combinations_flights["Id"]
     route_columns = ['From', 'To', 'Date', 'Hour', 'Price']
     combinations_flights["Route"].insert(0, flight[route_columns].values.tolist())
-    #print("Combination after inserting all the flight info:\n", combinations_flights)
+    print("Combination after inserting all the flight info:\n", combinations_flights)
     return combinations_flights
     
 # Convertir todos los vuelos del DF de una combinación a una única fila
@@ -140,22 +140,26 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
             combinations = pd.DataFrame([], columns = combination_columns)
             for index_row_tuple in viajes_posibles.iterrows():
                 possible_flight = index_row_tuple[1]
-                print()
                 if n_ciudades_a_visitar > 1: #and possible_flight['To'] not in departure_cities:
                     # si todavía nos quedan viajes por hacer, hacer llamadas recursivas
-                    print("Checking successive combinations from:\n{}".format(possible_flight))
+                    print("Checking successive combinations from {} to {} on {}".format(current_city, possible_flight['To'], current_date))
                     # devuelve un DF con todas las combinaciones desde current_city
                     next_combinations = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
-                    print("Next {} combinations from {} are:\n{}".format(len(next_combinations), current_city, next_combinations))
+                    print("{} combinations found from {} on {}:\n{}".format(len(next_combinations), current_city,current_date, next_combinations))
                     # Merge next_combinations DF/Series with combinations
-                    combinations = combinations.append(insertFlightInCombination(next_combinations, possible_flight), ignore_index=True)
+                    for row_index in range(len(next_combinations)):
+                        combinations = combinations.append(insertFlightInCombination(next_combinations.iloc[row_index], possible_flight))
+                        #combinations.iloc[row_index] = insertFlightInCombination(next_combinations.iloc[row_index], possible_flight)
+                    #combinations = combinations.append(insertFlightInCombination(next_combinations, possible_flight), ignore_index=True)
                 elif len(viajes_posibles) > 0:
                     # si es el último viaje (volver origen) no hacer más llamadas recursivas
+                    print("Comming back from {} to {} on {} because it's last flight".format(current_city, possible_flight['To'], current_date))
                     combinations = combinations.append(insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), possible_flight), ignore_index=True)
                 else:
                     print("Something strange happened at line 157.")
+            print("All the next combinations found from {} on {} are:\n{}".format(current_city, current_date, combinations))
             # insertar el vuelo actual en todas las combinaciones encontradas
             """
             if len(combinations) > 0:
