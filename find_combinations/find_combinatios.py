@@ -14,6 +14,8 @@ import pandas as pd
 import datetime
 import numpy as np
 
+from simulated_functions_find_combinations import *
+
 normalized_city_score = [['london', 1.0, 'United Kingdom'],
  ['rome', 1.0, 'Italy'],
  ['naples', 1.0, 'Italy'],
@@ -76,55 +78,6 @@ normalized_city_score = [['london', 1.0, 'United Kingdom'],
 
 df_normalized_city_score = pd.DataFrame(normalized_city_score,columns=["city","score", "country"])
 
-# Función que coge json y lo convierte en list of lists
-def add_to_table(result):
-  price_matrix = []
-  # Le metemos cada valor
-  for r in range(len(result["data"])):
-    price_row = []
-    price_row.append(result["data"][r]["route"][0]["cityFrom"])
-    price_row.append(result["data"][r]["route"][0]["cityTo"])
-    price_row.append(result["data"][r]["route"][0]["mapIdto"])
-    price_row.append(datetime.datetime.fromtimestamp(int(result["data"][r]["route"][0]["aTimeUTC"])).strftime('%H:%M:%S'))
-    price_row.append(datetime.datetime.fromtimestamp(int(result["data"][r]["route"][0]["aTimeUTC"])).strftime('%Y-%m-%d'))
-    price_row.append(result["data"][r]["price"])
-    price_row.append(result["data"][r]["route"][0]["id"])
-    price_matrix.append(price_row)
-  return price_matrix
-
-# le metes origen, destinos y fecha y te da el list of lists
-def precioTrayectos(origen, destinos, fecha, pasajeros):
-  # si input es una lista al convertir a string tenemos que quitar los corchetes [ ]
-  destinos = str(destinos).replace("'", "").replace(" ", "").replace("[", "").replace("]", "")
-  #print("Get prices from {} to {} on {}".format(origen, destinos, fecha))
-  if len(destinos) == 0:
-    destinos = ""
-  if not pasajeros:
-    pasajeros = 1
-  params = {
-            "partner":"picky",
-            "locale":"es",
-            "curr":"EUR",
-            "dateFrom": fecha,
-            "dateTo": fecha,
-            "directFlights": 1,
-            "oneforcity": 1,
-            "passengers": pasajeros,
-            "flyFrom": origen,
-            "to": destinos,
-            "limit": 20            
-  }
-  host = "https://api.skypicker.com/flights"
-  resp_code = 0
-  req_attempts = 0
-  while resp_code != 200:
-    response = requests.get(host, params = params)
-    resp_code = response.status_code
-    req_attempts += 1
-    if resp_code != 200:
-      print('Response code of attempt {} is: {}'.format(req_attempts, resp_code))
-  full_matrix = add_to_table(response.json())
-  return full_matrix
 
 
 # Función que suma días
@@ -132,19 +85,6 @@ def addDays(fecha,days):
   fecha = datetime.datetime.strptime(fecha, "%d/%m/%Y")
   fecha2 = fecha + datetime.timedelta(days=int(days))
   return datetime.datetime.strftime(fecha2, "%d/%m/%Y")
-
-
-# Class que usaremos luego para pasar a json
-class MyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        else:
-            return super(MyEncoder, self).default(obj)
 
 
 # Convertir todos los vuelos del DF de una combinación a una única fila
@@ -273,158 +213,9 @@ def findBestPathLocMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciu
     combination += 1
   all_combinations_flights.drop('CodeTo', axis=1, inplace=True)
   all_combinations_flights.sort_values(["Price"], inplace=True)
-  #print("All the combinations found are:\n", all_combinations_flights)
-  all_paths = convertCombinationDfToDict(all_combinations_flights, pasajeros)
-  #print("All combinations converted to df:\n", 
-  #      convertCombinationDfToDict(all_combinations_flights, pasajeros))
   return all_combinations_flights
 
-# Función equivalente a fullMatrix pero sin destinos fijos
 
-def fullMatrixNoDestinos(origen, df_normalized_city_score, fecha_salida, dias_por_ciudad, numero_ciudades, pasajeros):
-  # df_normalized_city_score es un df, convertimos la primera columna a list para tenerlo más manejable
-  cool_connections = df_normalized_city_score["city"].tolist()
-  
-  full_matrix = pd.DataFrame(columns=["From","To","CodeTo","Hour","Date","Price","Id","Score"])
-  # Ida
-  # Creamos una lista, dentro de ella pondremos más listas con los destinos para que hagan de orígenes en la siguiente iteración
-  origins = []
-  # Buscamos los 20 vuelos más baratos desde el origen y convertimos el resultado a df
-  precios_ida = precioTrayectos(origen,"",fecha_salida, pasajeros)
-  df_precios_ida = pd.DataFrame(precios_ida,columns=["From","To","CodeTo","Hour","Date","Price","Id"])
-  # Sacamos el precio del vuelo más caro
-  precio_max = df_precios_ida.loc[df_precios_ida['Price'].idxmax()]["Price"]
-  # Filtramos solo los vuelos que acaban en un destino de cool_connections
-  filtered_df = df_precios_ida[df_precios_ida["CodeTo"].isin(cool_connections)]
-  # Añadimos al df una columna con el score de cada ciudad y ordenamos
-  filtered_df.loc[:,"Score"] = 1 - (filtered_df.loc[:,"Price"] / precio_max)
-  filtered_df.sort_values("Score",ascending = False)
-  # Cogemos los cinco destinos con mayor score y los añadimos a origins para la siguiente iteración
-  origins.append(filtered_df.loc[:4,"CodeTo"].tolist())
-  # Y guardamos toda la info de los tres viajes en el df full_matrix
-  full_matrix = full_matrix.append(filtered_df.loc[:2])
-
-  # Trayectos intermedios
-  # Loopeamos en función del número de ciudades que el user quiere ver -1
-  for c in range(numero_ciudades - 1):
-    # Sumamos días a la fecha de salida
-    fecha_salida = addDays(fecha_salida, dias_por_ciudad)
-    origins.append([])
-    # Buscamos vuelos desde cada uno de los destinos de la fecha anterior
-    for o in origins[-2]:
-      # print("estamos buscando vuelos desde " + d + "el día " + str(c))
-      # Sacamos precios y convertimos a df
-      precios_ida = precioTrayectos(o,"",fecha_salida, pasajeros)
-      df_precios_ida = pd.DataFrame(precios_ida,columns=["From","To","CodeTo","Hour","Date","Price","Id"])
-      #print(df_precios_ida)
-      # Sacamos el precio del vuelo más caro
-      precio_max = df_precios_ida.loc[df_precios_ida['Price'].idxmax()]["Price"]
-      # Filtramos solo los vuelos que acaban en un destino de cool_connections
-      filtered_df = df_precios_ida[df_precios_ida["CodeTo"].isin(cool_connections)]
-      # Añadimos al df una columna con el score de cada ciudad y ordenamos
-      filtered_df.loc[:,"Score"] = 1 - (filtered_df.loc[:,"Price"] / precio_max)
-      filtered_df.sort_values("Score",ascending = False)
-      # Cogemos los cinco destinos con mayor score y si no están ya, los añadimos a origins para la siguiente iteración
-      new_origins = filtered_df.loc[:4,"CodeTo"].tolist()
-      for x in new_origins:
-        if x not in origins[-1]:
-          origins[-1].append(x)
-      # print(origins)          
-      # Y guardamos toda la info de los tres viajes en el df full_matrix
-      full_matrix = full_matrix.append(filtered_df.loc[:2]) 
-      full_matrix
-              
-  # Vuelta
-  fecha_salida = addDays(fecha_salida, dias_por_ciudad)
-  for o in origins[-1]:
-    precio_vuelta = precioTrayectos(o, origen, fecha_salida, pasajeros)
-    df_precio_vuelta = pd.DataFrame(precio_vuelta,columns=["From","To","CodeTo","Hour","Date","Price","Id"])
-    df_precio_vuelta["Score"] = 1
-    # Los añadimos todos al full_matrix
-    full_matrix = full_matrix.append(df_precio_vuelta)
-
-  return full_matrix
-
-
-def fullMatrixConDestinos(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, pasajeros):
-  # De origen a cada destino
-  first_flight_options = precioTrayectos(origen, destinos, fecha_salida, pasajeros)
-  #print('first_flight_options:\n', first_flight_options)
-
-  # Loop que busca todas las combinaciones entre destinos
-  in_between_flights_options = []
-  for i in range(numero_ciudades - 1):
-    fecha_salida = addDays(fecha_salida,dias_por_ciudad)
-    for departure_city in destinos:
-      other_cities = [city for city in destinos if city != departure_city]
-      
-      flights_current_city = precioTrayectos(departure_city, other_cities, fecha_salida, pasajeros)
-      in_between_flights_options += flights_current_city
-      #print('Starting from {}, checking destinations: {}.\n'.format(departure_city, other_cities), flights_current_city)
-
-  # Loop que busca los viajes de vuelta
-  fecha_salida = addDays(fecha_salida,dias_por_ciudad)
-  last_flight_options = []
-  for d in destinos:
-    last_flight_options += precioTrayectos(d, origen, fecha_salida, pasajeros) 
-    #print('last_flight_options from {} to {} on {}:\n'.format(d, origen, fecha_salida), [element[1] for element in last_flight_options])
-
-  # Convertimos los tres trozos en Series y los metemos en un dataframe
-  columnas = pd.Series(["From", "To", "CodeTo", "Hour", "Date", "Price", "Id"])
-  final_matrix1 = pd.DataFrame(first_flight_options, columns=columnas)
-  final_matrix2 = pd.DataFrame(in_between_flights_options, columns=columnas)
-  final_matrix3 = pd.DataFrame(last_flight_options, columns=columnas)
-
-  full_matrix = pd.concat([final_matrix1, final_matrix2, final_matrix3])
-  #print(full_matrix.loc[:, full_matrix.columns != 'Id'])
-  return full_matrix
-
-result = precioTrayectos("BCN", "MAD", "11/08/2018", 1) 
-result
-
-# Inputs: origen, destinos, fecha_salida días por ciudad
-def fullMatrix(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, pasajeros, n_combinaciones):
-  #print("Get the prices from {} to {}. {} days per city, {} cities to visit, {} passengers"
-  #     .format(origen, destinos, dias_por_ciudad, numero_ciudades, pasajeros))
-  
-  # Comprobamos si origen es string y que no haya más de 9 destinos
-  if not isinstance(origen, str):
-    raise ValueError("Error! Origen must be string")
-  elif (len(destinos) > 9) or (numero_ciudades > 9):
-    raise ValueError("Error! Not more than 9 destinos")
-
-  # Si destinos está vacío, tiramos de fullMatrixNoDestinos
-  if len(destinos) == 0:
-    print("No hay destinos, se sacan con fullMatrixNoDestinos")
-    full_matrix = fullMatrixNoDestinos(origen, df_normalized_city_score, fecha_salida, dias_por_ciudad, numero_ciudades, pasajeros)
-  # Si no, seguimos con la fullMatrixConDestinos
-  else:
-    print("Los destinos son:", destinos)
-    full_matrix = fullMatrixConDestinos(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, pasajeros)
-  full_matrix.sort_values(["Date","Price"])
-  return full_matrix #final_json
-
-origen = "madrid"
-destinos_posibles = ['BCN', 'PAR', 'LON', 'BER']
-fecha = "11/08/2018"
-dias_por_ciudad = 2
-numero_ciudades = 3
-pasajeros = 1
-combinaciones = 5
-full_matrix = fullMatrix(origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
-
-full_matrix
-
-origen = "madrid"
-destinos_posibles = []
-fecha = "11/08/2018"
-dias_por_ciudad = 2
-numero_ciudades = 3
-pasajeros = 1
-combinaciones = 5
-full_matrix = fullMatrix(origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
-
-full_matrix
 
 def getMatrixAndCombinations (origen, destinos, fecha_salida, dias_por_ciudad, numero_ciudades, pasajeros, n_combinaciones):
   """
@@ -550,8 +341,3 @@ solucion="""
 9  Barcelona       [Bucarest, Atenas, Sofía, Barcelona]   
 5  Barcelona      [Sofía, Varsovia, Bratislava, Gerona]   
 """
-
-full_matrix
-
-d = json.loads(full_matrix)
-d
