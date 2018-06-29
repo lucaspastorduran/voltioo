@@ -29,3 +29,17 @@ def fullMatrix(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, 
     full_matrix = pd.read_csv("flights_with_destinations.csv")
   full_matrix.sort_values(["Date","Price"])
   return full_matrix
+
+if __name__ == "__main__":
+    cases = [[], ["PAR", "BER", "AMS"]]
+    passed_tests = 0
+    for test_case_index, destinations in enumerate(cases):
+        print("Starting TC", test_case_index, "checking with destinations:", destinations)
+        try:
+            flights_matrix = fullMatrix("MAD", destinations, None, 2, 2, None, None)
+        except Exception as e:
+            print("Test FAILED!\nReason is:", e)
+        else:
+            print("Test SUCCESSFULL! Result:\n", flights_matrix)
+            passed_tests += 1
+    print("All TC performed. {} FROM {} TESTS PASSED".format(passed_tests, len(cases)))
