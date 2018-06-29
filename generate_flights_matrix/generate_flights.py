@@ -214,6 +214,84 @@ def fullMatrixNoDestinos(origen, df_normalized_city_score, fecha_salida, dias_po
 
   return full_matrix
 
+def generateAllDates(first_date, number_cities, days_city):
+  dates_list = [first_date]
+  for i in range(number_cities):
+    next_date = addDays(dates_list[-1], days_city)
+    dates_list.append(next_date)
+  return dates_list
+
+
+def getCoolCities(cool_connections, current_city):
+  cool_cities = []
+  for city in cool_connections:
+    if (city['city'] == current_city):
+      cool_cities = city['connections'].copy()
+      break
+  return cool_cities
+
+
+# Función para rellenar la info de todos los vuelos a partir de las "cool cities"
+def fullFlightsMatrix(flights_info, connections, dates, origin, current_city, n_cities_to_visit, passengers):
+  flights_from_city = pd.DataFrame(columns = flights_info.columns)
+  current_date = dates[-(n_cities_to_visit + 1)]
+  print("Starting iteration with {} cities pending, from {} at {}".format(n_cities_to_visit, current_city, current_date))
+  if n_cities_to_visit >= 0:
+    # there are still cities to visit
+    if n_cities_to_visit <= 0:
+      # all cities have been visited, must go back to depature
+      print("It's the last fligh, must come back to {}".format(origin))
+      destinations = [origin]
+    else:
+      # we still have to see more combinations
+      destinations = connections[connections["City"] == current_city]["Connections"].tolist()
+      print("All the cool destinations from {} are: {}".format(current_city, destinations))
+    flights_from_city_found = getJourneysPrice(current_city, destinations, current_date, passengers)
+    print("{} flights found from {}:\n{}".format(len(flights_from_city_found), current_city,
+                                                 flights_from_city_found.loc[:, flights_from_city_found.columns != 'Id']))
+    # add the flights found into the existing dataframe
+    flights_from_city = pd.concat([flights_from_city, flights_from_city_found], ignore_index=True)
+    # for each city where we found a flight, compute recursively
+    cities_to_visit = list(flights_from_city['CodeTo'])
+    for dest_city in cities_to_visit:
+      # check that the same flight (from, to, date) is not already added by another threat
+      rows_same_date = (flights_info["Date"] == current_date)
+      rows_same_depart = (flights_info["From"] == current_city)
+      if ((dest_city not in flights_info[rows_same_date & rows_same_depart]['CodeTo']) and
+          (dest_city not in origin) and (n_cities_to_visit > 0)):
+        print("Starting recursive call from", current_city, "to", dest_city,"The others are:",cities_to_visit)
+        flights_from_city = pd.concat([flights_from_city,
+                                  fullFlightsMatrix(flights_info, connections, dates, origin, dest_city, n_cities_to_visit-1, passengers)],
+                                  ignore_index=True)
+        print("FInished recursive call from", current_city, "to", dest_city)
+      else:
+        print(dest_city, "has been already considered as destination on", current_date)
+    print("Flights from citys after the successive calls:\n", flights_from_city.loc[:, flights_from_city.columns != 'Id'])
+  else:
+    # no more trips remaining
+    print("fullFlightMatrix terminated in", current_city, "at", current_date)
+  return flights_from_city
+
+
+# Esta función hace algo parecido a full matrix, solo que a medida que avanza va mirando añadiendo como
+# destino las "cool connections" de cada una de las ciudades encontradas.
+origen = "BCN"
+fecha = "15/07/2018"
+dias_por_ciudad = 2
+ciudades_minimas_visitar = 2
+
+dates = generateAllDates(fecha, ciudades_minimas_visitar, dias_por_ciudad)
+print(dates)
+pasajeros = 1
+combinaciones = 10
+
+list_of_tags = ["From",'To','CodeTo','Hour','Date','Price','Id']
+cool_flights_matrix = pd.DataFrame(columns = pd.Series(list_of_tags))
+
+cool_flights_matrix = fullFlightsMatrix(cool_flights_matrix, test2, dates, origen, origen, ciudades_minimas_visitar, pasajeros)
+cool_flights_matrix.sort_values(["From","Date"], inplace = True)
+print(cool_flights_matrix)
+
 
 def fullMatrixConDestinos(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, pasajeros):
   # De origen a cada destino
