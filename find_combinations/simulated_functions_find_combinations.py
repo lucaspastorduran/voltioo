@@ -31,7 +31,7 @@ def fullMatrix(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, 
   return full_matrix
 
 if __name__ == "__main__":
-    cases = [[], ["PAR", "BER", "AMS"]]
+    cases = [[], ["BCN"], ["PAR", "BER", "AMS"]]
     passed_tests = 0
     for test_case_index, destinations in enumerate(cases):
         print("Starting TC", test_case_index, "checking with destinations:", destinations)
