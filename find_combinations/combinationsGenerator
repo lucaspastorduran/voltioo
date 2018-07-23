@@ -1,0 +1,6 @@
+def sumDigits(number):
+    return sum(int(digit)**2 for digit in str(number))
+
+number_flights = 4
+combinations = sorted([i for i in range(10**number_flights)],key = sumDigits)
+print combinations[:30]
