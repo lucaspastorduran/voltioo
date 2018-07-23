@@ -16,70 +16,6 @@ import numpy as np
 
 from simulated_functions_find_combinations import *
 
-normalized_city_score = [['london', 1.0, 'United Kingdom'],
- ['rome', 1.0, 'Italy'],
- ['naples', 1.0, 'Italy'],
- ['malaga', 1.0, 'Spain'],
- ['alicante', 1.0, 'Spain'],
- ['amsterdam', 1.0, 'Netherlands'],
- ['stockholm', 1.0, 'Sweden'],
- ['barcelona', 1.0, 'Spain'],
- ['berlin', 1.0, 'Germany'],
- ['madrid', 1.0, 'Spain'],
- ['milan', 1.0, 'Italy'],
- ['venice', 1.0, 'Italy'],
- ['brussels', 1.0, 'Belgium'],
- ['manchester', 1.0, 'United Kingdom'],
- ['budapest', 1.0, 'Hungary'],
- ['palma', 1.0, 'Spain'],
- ['copenhagen', 1.0, 'Denmark'],
- ['paris', 1.0, 'France'],
- ['porto', 1.0, 'Portugal'],
- ['dublin', 1.0, 'Ireland'],
- ['sofia', 0.9629629629629629, 'Bulgaria'],
- ['liverpool', 0.9629629629629629, 'United Kingdom'],
- ['wroclaw', 0.9259259259259259, 'Poland'],
- ['prague', 0.9259259259259259, 'Czechia'],
- ['seville', 0.9259259259259259, 'Spain'],
- ['athens', 0.9259259259259259, 'Greece'],
- ['lisbon', 0.9259259259259259, 'Portugal'],
- ['valencia', 0.8888888888888888, 'Spain'],
- ['barcelona', 0.8888888888888888, 'Spain'],
- ['helsinki', 0.8518518518518519, 'Finland'],
- ['ibiza', 0.8148148148148148, 'Spain'],
- ['vilnius', 0.8148148148148148, 'Lithuania'],
- ['marrakech', 0.8148148148148148, 'Morocco'],
- ['oslo', 0.8148148148148148, 'Norway'],
- ['belfast', 0.8148148148148148, 'United Kingdom'],
- ['lanzarote', 0.7777777777777778, 'Spain'],
- ['las-palmas', 0.7777777777777778, 'Spain'],
- ['munich', 0.7777777777777778, 'Germany'],
- ['zurich', 0.7407407407407407, 'Switzerland'],
- ['salzburg', 0.7407407407407407, 'Austria'],
- ['vienna', 0.7037037037037037, 'Austria'],
- ['bratislava', 0.7037037037037037, 'Slovakia'],
- ['riga', 0.7037037037037037, 'Latvia'],
- ['bilbao', 0.7037037037037037, 'Spain'],
- ['mikonos', 0.5925925925925926, 'Greece'],
- ['santander', 0.5925925925925926, 'Spain'],
- ['dubrovnik', 0.5555555555555556, 'Croatia'],
- ['fuerteventura', 0.5555555555555556, 'Spain'],
- ['santiago-de-compostela', 0.5555555555555556, 'Spain'],
- ['mahon', 0.5185185185185185, 'United States'],
- ['asturias', 0.48148148148148145, 'Spain'],
- ['granada', 0.4074074074074074, 'Spain'],
- ['almeria', 0.37037037037037035, 'Spain'],
- ['tenerife', 0.3333333333333333, 'Spain'],
- ['santa-cruz-de-la-palma', 0.2962962962962963, 'Spain'],
- ['murcia', 0.2962962962962963, 'Spain'],
- ['vigo', 0.2962962962962963, 'Spain'],
- ['zaragoza', 0.2962962962962963, 'Spain'],
- ['jerez', 0.25925925925925924, 'Spain']]
-
-df_normalized_city_score = pd.DataFrame(normalized_city_score,columns=["city","score", "country"])
-
-
-
 # Función que suma días
 def addDays(fecha,days):
   fecha = datetime.datetime.strptime(fecha, "%d/%m/%Y")
@@ -121,6 +57,101 @@ def convertCombinationDfToDict(combinations_df, passengers):
 
  
 # Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
+def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, pasajeros, n_combinaciones):
+  n_viajes = n_ciudades_a_visitar + 1
+  n_ciudades_a_elegir = len(ciudades_deseadas) #conjunto ciudades entre las que elegir
+  
+  # comprobar que sea posible elegir n combinaciones con tantas ciudades y tantos viajes
+  possible_combinations = int(math.factorial(n_ciudades_a_elegir)/math.factorial(n_ciudades_a_elegir - n_ciudades_a_visitar))
+  if (n_combinaciones > possible_combinations):
+    # it is not posible to find all the combinations in these conditions
+    print("Not possible to create {} combinations by choosing {} of {} desired cities! Only {} are possible"
+                     .format(n_combinaciones, n_ciudades_a_visitar, n_ciudades_a_elegir, possible_combinations))
+    n_combinaciones = possible_combinations
+  
+  # buscamos el mejor recorrido para cada una de las combinaciones
+  print("Show {} combinations from all the {}: choose {} cities from {} choices ({} flights)"
+        .format(n_combinaciones, possible_combinations, n_ciudades_a_visitar, n_ciudades_a_elegir, n_viajes))
+  all_combinations_flights = pd.DataFrame([], columns =  np.append(full_matrix.columns.values, "Route"))
+  all_paths = {}
+  combination = 0
+  comb_found = 0
+  print("Departure and arrival unique cities: ", departure_cities)
+  while (comb_found < n_combinaciones) and (combination < possible_combinations):
+    print("*****************************************************************")
+    one_combination_flights = pd.DataFrame([], columns = full_matrix.columns.values)
+    visited_cities = departure_cities.copy()
+    current_city = departure_cities.copy()
+
+    # calcula el idx_viaje para el que habrá que hacer excepcion y no elegir el viaje mas barato para generar combinaciones
+    flight_to_except = (combination - 1)%(n_ciudades_a_visitar)
+    index_if_except = math.ceil(float(combination)/(n_ciudades_a_visitar))
+    print('In combination {} we must choose the {} cheaper price for flight {}'
+          .format(combination + 1, index_if_except + 1, flight_to_except + 1))
+
+    # calcula los precios desde la ciudad actual hasta las siguientes
+    discard_comb = False
+    for idx_viaje in range(n_viajes):
+      current_date = fechas[idx_viaje]
+      print('Starting flight {}/{}: from {} on date {}'.format(idx_viaje + 1,n_viajes,current_city, current_date))
+      
+      # Mira si el viaje actual es el último o no
+      if (idx_viaje + 1) < n_viajes:
+        # Si no es el último viaje, además hay que evitar que el destino sea una ciudad ya visitada
+        accepted_cities = [element not in visited_cities for element in full_matrix['To']]     
+      else:
+        # Si es el último viaje, destino tiene que ser un de las ciudades de origen
+        accepted_cities = [element in departure_cities for element in full_matrix['To']]
+      
+      # Mirar destinos posibles teniendo en cuenta lo anterior, la fecha y la ciudad actual
+      filas_viajes_posibles = ([element in current_city for element in full_matrix['From']] & 
+                               (full_matrix['Date'] == current_date) & accepted_cities)
+      
+      # Saca el df con todos los posibles destinos encontrados
+      n_viajes_posibles = np.sum(filas_viajes_posibles)
+      if n_viajes_posibles > 0:
+        viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
+      else:
+        viajes_posibles = pd.DataFrame([], columns = full_matrix.columns.values)
+        discard_comb = True
+        print("No flights found from {} on {}!".format(current_city, current_date))
+      print("All the flights found:\n", viajes_posibles)
+      
+      # Decide si este vuelo es la excepción para generar varias combinaciones y mira si hay suficientes
+      if idx_viaje == flight_to_except:
+        # Comprueba que se hayan encontrado encontrado alternativas suficientes
+        index_lower_price = index_if_except
+        if (index_if_except >= n_viajes_posibles):
+          discard_comb = True
+          print("Not enough flights in combination {} from {} on {} to find another combination!"
+                            .format(combination + 1, current_city, current_date))
+      else:
+        # No es la excepcion o es el vuelo de vuelta
+        index_lower_price = 0
+      print('Choosen flight {} of {} possible trips:\n {}'.
+            format(index_lower_price + 1, n_viajes_posibles, viajes_posibles))
+
+      # Actualiza los datos del mejor vuelo encontrado si la comb es valida
+      if not discard_comb:
+        one_combination_flights.loc[idx_viaje] = viajes_posibles.iloc[index_lower_price].copy()
+        current_city = one_combination_flights['To'].loc[idx_viaje]
+        visited_cities.append(current_city)
+      else:
+        print("Combination {} was discarded".format(combination + 1))
+        break
+      #print("visited cities: ", visited_cities)
+    # comprime la info de todos los vuelos de la combinación encontrada en una única fila
+    print("For combination {} there are the following flights:\n{}".format(combination+1, one_combination_flights))
+    if not discard_comb:
+      all_combinations_flights.loc[comb_found] = compressFlightsToCombination(one_combination_flights)
+      comb_found += 1
+      print("For combination {} there are the following flights:\n{}".format(comb_found, one_combination_flights))
+    combination += 1
+  all_combinations_flights.drop('CodeTo', axis=1, inplace=True)
+  all_combinations_flights.sort_values(["Price"], inplace=True)
+  return all_combinations_flights
+
+
 def findBestPathLocMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, pasajeros, n_combinaciones):
   n_viajes = n_ciudades_a_visitar + 1
   n_ciudades_a_elegir = len(ciudades_deseadas) #conjunto ciudades entre las que elegir
@@ -223,7 +254,7 @@ def getMatrixAndCombinations (origen, destinos, fecha_salida, dias_por_ciudad, n
   para llamar a "findbestpathloc", y del df de combinacioneshace el return del json.
   """
   # Sacamos el DF con la info de todos los vuelos necesarios
-  full_matrix = fullMatrix(origen, destinos, fecha_salida,dias_por_ciudad, numero_ciudades, pasajeros, n_combinaciones)
+  full_matrix = pd.read_csv("flights_with_destinations.csv")
   print("La matriz de vuelos queda:\n", full_matrix.loc[:, full_matrix.columns != 'Id'])
   
   # Sacamos origen, destinos, fechas y número de ciudades
@@ -241,8 +272,11 @@ def getMatrixAndCombinations (origen, destinos, fecha_salida, dias_por_ciudad, n
   # De todos los vuelos encontramos las mejores combinaciones
   best_combinations_df = findBestPathLocMulti(full_matrix, origen, destinos, numero_ciudades, fechas, pasajeros, n_combinaciones)
   # Convertimos a diccionario
-  #best_combinations_dict = convertCombinationDfToDict(all_combinations_flights, pasajeros))
+  #best_combinations_dict = convertCombinationDfToDict(all_combinations_flights, pasajeros)
   # Convertimos a json
   #best_combinations_json = json.dumps(best_combinations_dict, cls=MyEncoder)
   return best_combinations_df
 
+if __name__ == "__main__":
+    # run all the tests
+    

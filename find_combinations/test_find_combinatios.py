@@ -19,6 +19,7 @@ combinaciones = 5
 combinations_df = getMatrixAndCombinations (origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
 print(combinations_df)
 
+
 origen = "madrid"
 destinos_posibles = []
 fecha = "11/08/2018"
