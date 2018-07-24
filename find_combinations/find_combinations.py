@@ -9,12 +9,17 @@ Original file is located at
 
 import math
 import requests
+import sys
 import json
 import pandas as pd
 import datetime
 import numpy as np
 
-from simulated_functions_find_combinations import *
+sys.path.insert(0, "/home/lucas/Documentos/voltioo")
+#from simulated_functions_find_combinations import *
+from listo_para_flask import *
+#/home/lucas/Documentos/voltioo/
+#addDays, compressFlightsToCombination, convertCombinationDfToDict
 
 # Función que suma días
 def addDays(fecha,days):
@@ -279,4 +284,5 @@ def getMatrixAndCombinations (origen, destinos, fecha_salida, dias_por_ciudad, n
 
 if __name__ == "__main__":
     # run all the tests
+    print("find_combinations.py executed")
     

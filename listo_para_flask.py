@@ -456,29 +456,31 @@ def getMatrixAndCombinations (origen, destinos, fecha_salida, dias_por_ciudad, n
   
   return best_combinations_df
 
-origen = "madrid"
-destinos_posibles = ['BCN', 'PAR', 'LON', 'BER']
-fecha = "11/08/2018"
-dias_por_ciudad = 2
-numero_ciudades = 3
-pasajeros = 2
-combinaciones = 5
-combinations_df = getMatrixAndCombinations (origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
-combinations_df
 
-origen = "madrid"
-destinos_posibles = []
-fecha = "11/08/2018"
-dias_por_ciudad = 2
-numero_ciudades = 3
-pasajeros = 2
-combinaciones = 5
-combinations_df = getMatrixAndCombinations (origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
-combinations_df
+if __name__ == "__main__":
+    origen = "madrid"
+    destinos_posibles = ['BCN', 'PAR', 'LON', 'BER']
+    fecha = "11/08/2018"
+    dias_por_ciudad = 2
+    numero_ciudades = 3
+    pasajeros = 2
+    combinaciones = 5
+    combinations_df = getMatrixAndCombinations (origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
+    combinations_df
+    
+    origen = "madrid"
+    destinos_posibles = []
+    fecha = "11/08/2018"
+    dias_por_ciudad = 2
+    numero_ciudades = 3
+    pasajeros = 2
+    combinaciones = 5
+    combinations_df = getMatrixAndCombinations (origen, destinos_posibles, fecha, dias_por_ciudad, numero_ciudades, pasajeros, combinaciones)
+    combinations_df
+    
+    test_full_matrix = fullMatrixNoDestinos("madrid", df_normalized_city_score, "11/08/2018", 2, 3, 2)
 
-test_full_matrix = fullMatrixNoDestinos("madrid", df_normalized_city_score, "11/08/2018", 2, 3, 2)
-
-test_full_matrix
+    test_full_matrix
 
 origen = "BCN"
 destinos_posibles = ["DUB", "VIE", "ATH","TLS"]
