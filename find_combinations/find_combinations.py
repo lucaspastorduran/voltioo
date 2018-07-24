@@ -62,26 +62,37 @@ def convertCombinationDfToDict(combinations_df, passengers):
 
  
 # Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
-def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, pasajeros, n_combinaciones):
+def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, n_combinaciones):
   n_viajes = n_ciudades_a_visitar + 1
   n_ciudades_a_elegir = len(ciudades_deseadas) #conjunto ciudades entre las que elegir
-  
-  # comprobar que sea posible elegir n combinaciones con tantas ciudades y tantos viajes
-  possible_combinations = int(math.factorial(n_ciudades_a_elegir)/math.factorial(n_ciudades_a_elegir - n_ciudades_a_visitar))
-  if (n_combinaciones > possible_combinations):
-    # it is not posible to find all the combinations in these conditions
-    print("Not possible to create {} combinations by choosing {} of {} desired cities! Only {} are possible"
-                     .format(n_combinaciones, n_ciudades_a_visitar, n_ciudades_a_elegir, possible_combinations))
-    n_combinaciones = possible_combinations
-  
-  # buscamos el mejor recorrido para cada una de las combinaciones
-  print("Show {} combinations from all the {}: choose {} cities from {} choices ({} flights)"
-        .format(n_combinaciones, possible_combinations, n_ciudades_a_visitar, n_ciudades_a_elegir, n_viajes))
+
   all_combinations_flights = pd.DataFrame([], columns =  np.append(full_matrix.columns.values, "Route"))
   all_paths = {}
   combination = 0
   comb_found = 0
-  print("Departure and arrival unique cities: ", departure_cities)
+  def findBestPathGlobMultiHandler (full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas):
+    current_date = fechas[0]
+    current_city = 
+    # Si es el último viaje volvemos al origen
+    if n_ciudades_a_visitar > 0:
+        accepted_cities = [element in departure_cities for element in full_matrix['To']]
+    # Si no, exploramos todos los posibles viajes
+    else:
+        accepted_cities = [element not in visited_cities for element in full_matrix['To']] 
+    # Mirar destinos posibles teniendo en cuenta lo anterior, la fecha y la ciudad actual
+    filas_viajes_posibles = ([element in current_city for element in full_matrix['From']] & \
+                               (full_matrix['Date'] == current_date) & accepted_cities)
+    # Saca el df con todos los posibles destinos encontrados
+    n_viajes_posibles = np.sum(filas_viajes_posibles)
+    if n_viajes_posibles > 0:
+        viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
+    else:
+        viajes_posibles = pd.DataFrame([], columns = full_matrix.columns.values)
+        discard_comb = True
+        print("No flights found from {} on {}!".format(current_city, current_date))
+    print("All the flights found:\n", viajes_posibles)
+    pass
+   
   while (comb_found < n_combinaciones) and (combination < possible_combinations):
     print("*****************************************************************")
     one_combination_flights = pd.DataFrame([], columns = full_matrix.columns.values)
