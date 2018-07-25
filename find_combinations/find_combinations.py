@@ -15,9 +15,9 @@ import pandas as pd
 import datetime
 import numpy as np
 
-sys.path.insert(0, "/home/lucas/Documentos/voltioo")
+#sys.path.insert(0, "/home/lucas/Documentos/voltioo")
 #from simulated_functions_find_combinations import *
-from listo_para_flask import *
+#from listo_para_flask import *
 #/home/lucas/Documentos/voltioo/
 #addDays, compressFlightsToCombination, convertCombinationDfToDict
 
@@ -59,6 +59,25 @@ def convertCombinationDfToDict(combinations_df, passengers):
         'route': combination['Route']
     }
   return combination_dict
+
+def getInfoFromMatrix(full_matrix):
+    #departure = fullMatrix[fullMatrix['Date'] == dates[-1]]['To']
+    #departure = departure.unique().tolist()
+    #destinations = [city for city in fullMatrix['To'].tolist() if city not in departure)]
+    
+    # Sacamos origen, destinos, fechas y número de ciudades
+    fechas = sorted(full_matrix["Date"].unique().tolist())
+    print("fechas:", fechas)
+    origen = list(full_matrix.loc[(full_matrix["Date"] == fechas[0]), "From"].unique())
+    print("origen:", origen)
+    ciudades_vuelta = list(full_matrix.loc[(full_matrix["Date"] == fechas[-1]), "To"].unique())
+    print("ciudades vuelta:", ciudades_vuelta)
+    origen.extend(city for city in ciudades_vuelta if city not in origen)
+    print("ciudades origen/vuelta", ciudades_vuelta)
+    destinos = [city for city in full_matrix["To"].unique() if city != origen]
+  
+    
+    return origen, destinos, fechas
 
  
 # Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
