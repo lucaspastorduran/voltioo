@@ -110,11 +110,12 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         # Si hay viajes posibles, haz la llamad recursiva de los siguientes
         viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
         print("No flights found from {} on {}!".format(current_city, current_date))
-    next_flights = pd.DataFrame([], columns = full_matrix.columns.values)
+    all_possible_flights = pd.DataFrame([], columns = full_matrix.columns.values)
     for destination_city in list(viajes_posibles['To']):
-        next_flights.append(findBestPathGlobMultiHandler(full_matrix, departure_cities, destination_city, \
+        flights_from_ciy = findBestPathGlobMultiHandler(full_matrix, departure_cities, destination_city, \
                                                      [c for c in ciudades_deseadas if c not in current_city], \
                                                      n_ciudades_a_visitar - 1, fechas[1:])
+        all_possible_flights = pd.concat(all_possible_flights, flights_from_ciy)
     # Si no hemos encontrado nada en los siguientes caminos
     one_combination_flights = pd.DataFrame([], columns = full_matrix.columns.values)
     
