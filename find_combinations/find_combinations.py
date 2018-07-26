@@ -60,23 +60,20 @@ def convertCombinationDfToDict(combinations_df, passengers):
     }
   return combination_dict
 
-def getInfoFromMatrix(full_matrix):
-    #departure = fullMatrix[fullMatrix['Date'] == dates[-1]]['To']
-    #departure = departure.unique().tolist()
-    #destinations = [city for city in fullMatrix['To'].tolist() if city not in departure)]
-    
-    # Sacamos origen, destinos, fechas y número de ciudades
+def getInfoFromMatrix(full_matrix, print_allowed = False):
+    """
+    Funcion para deducir los origen, destinos y fechas de una fullMatrix
+    Con ella nos ahorramos tener que volver a declarar estos parámetros que están
+    dentro de la matriz.
+    """
     fechas = sorted(full_matrix["Date"].unique().tolist())
-    print("fechas:", fechas)
     origen = list(full_matrix.loc[(full_matrix["Date"] == fechas[0]), "From"].unique())
-    print("origen:", origen)
     ciudades_vuelta = list(full_matrix.loc[(full_matrix["Date"] == fechas[-1]), "To"].unique())
-    print("ciudades vuelta:", ciudades_vuelta)
     origen.extend(city for city in ciudades_vuelta if city not in origen)
-    print("ciudades origen/vuelta", ciudades_vuelta)
-    destinos = [city for city in full_matrix["To"].unique() if city != origen]
-  
-    
+    destinos = [city for city in full_matrix["To"].unique() if city not in origen]
+    if print_allowed:
+        print("Fechas:", fechas, "\nOrigen:", origen, "\nCiudades vuelta:", ciudades_vuelta)
+        print("Ciudades origen/vuelta", ciudades_vuelta, "\nDestinos:", destinos)
     return origen, destinos, fechas
 
  
