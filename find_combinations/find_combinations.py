@@ -74,17 +74,17 @@ def getInfoFromMatrix(full_matrix, print_allowed = False):
     if print_allowed:
         print("Fechas:", fechas, "\nOrigen:", origen, "\nCiudades vuelta:", ciudades_vuelta)
         print("Ciudades origen/vuelta", ciudades_vuelta, "\nDestinos:", destinos)
-    return origen, destinos, len(fechas) + 1, fechas
+    return origen, destinos, len(fechas), fechas
 
  
 # Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
 def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, n_combinaciones):
     assert n_ciudades_a_visitar >= 1, "No has elegido ninguna ciudad"
-    print("We start adventure from {} on {} visiting {} cities. Will find {} combinations".
-          format(departure_cities, fechas[0], n_ciudades_a_visitar, n_combinaciones))
+    print("\nWe start adventure from {} on {}, flying {} times between {} cities. Return the {} cheapest combinations".
+          format(departure_cities, fechas[0], n_ciudades_a_visitar, ciudades_deseadas, n_combinaciones))
     def findBestPathGlobMultiHandler(full_matrix, departure_cities, current_city, ciudades_deseadas, n_ciudades_a_visitar, fechas):
         current_date = fechas[0]
-        print("\nStarting from {} on {}. We can do {} flihts more.".format(current_city, current_date, n_ciudades_a_visitar))
+        print("\nStarting from {} on {}. We can do {} flihts to desired cities and 1 to come back to departure.".format(current_city, current_date, n_ciudades_a_visitar-1))
         if n_ciudades_a_visitar <= 0: 
             # Si ya no quedan viajes, se acaba
             raise ValueError('You cannot request less than one city in FindBestPathGlob')
@@ -122,7 +122,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         else:
             return pd.DataFrame([], columns = full_matrix.columns.values)
         print("All the flights found:\n", viajes_posibles)
-    return findBestPathGlobMultiHandler(full_matrix, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar - 1, fechas)
+    return findBestPathGlobMultiHandler(full_matrix, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas)
 
 
 def findBestPathLocMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, pasajeros, n_combinaciones):
