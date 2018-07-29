@@ -117,12 +117,12 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                                                          n_ciudades_a_visitar - 1, fechas[1:])
             successive_flights = successive_flights.append(flights_from_ciy, ignore_index = True)
         # Si no hemos encontrado nada en los siguientes caminos
-        if len(successive_flights) > 0:
-            print("Successive flights found:\n",successive_flights)
-            return viajes_posibles.append(successive_flights, ignore_index = True)
-        else:
-            print("No successive flights found. Return empty DF")
-            return pd.DataFrame([], columns = full_matrix.columns.values)
+        #if len(successive_flights) > 0:
+        print("Successive flights found:\n",successive_flights)
+        return viajes_posibles.append(successive_flights, ignore_index = True)
+        #else:
+        #    print("No successive flights found. Return empty DF")
+        #    return pd.DataFrame([], columns = full_matrix.columns.values)
         print("All the flights found:\n", viajes_posibles)
     return findBestPathGlobMultiHandler(full_matrix, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas)
 
