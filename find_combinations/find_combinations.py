@@ -120,7 +120,13 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         #if len(successive_flights) > 0:
         print("Successive flights found:\n",successive_flights)
         return viajes_posibles.append(successive_flights, ignore_index = True)
-        #else:
+        """
+        f(previous_flights):
+            if successiveflights > 0 and quedan viajes:
+                append flighst to previousflights
+            else:
+                estamos en ultimo viaje, conviertelos todo a una combinacion y devulevelo
+    #else:
         #    print("No successive flights found. Return empty DF")
         #    return pd.DataFrame([], columns = full_matrix.columns.values)
         print("All the flights found:\n", viajes_posibles)
