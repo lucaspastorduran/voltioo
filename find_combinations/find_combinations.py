@@ -110,14 +110,14 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
             viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
             print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
             successive_flights = pd.DataFrame([], columns = full_matrix.columns.values)
-            possible_destinations = list(viajes_posibles['To'])
-            print("Possible destinations from {} are: {}".format(current_city, possible_destinations))
-            for destination_city in list(set(possible_destinations) - set(departure_cities)):
-                flights_from_ciy = findBestPathGlobMultiHandler(full_matrix, (filas_viajes_posibles | previous_flights), \
-                                                                departure_cities, destination_city, \
-                                                             [c for c in ciudades_deseadas if c not in current_city], \
-                                                             n_ciudades_a_visitar - 1, fechas[1:])
-                successive_flights = successive_flights.append(flights_from_ciy, ignore_index = True)
+            for possible_flight in viajes_posibles.iterrows():
+                if possible_flight['To'] not in departure_cities:
+                    previous_and_current_flights = previous_flights.append(possible_flight)
+                    flights_from_ciy = findBestPathGlobMultiHandler(full_matrix, previous_and_current_flights, \
+                                                                    departure_cities, possible_flight['To'], \
+                                                                    [c for c in ciudades_deseadas if c not in current_city], \
+                                                                    n_ciudades_a_visitar - 1, fechas[1:])
+                    successive_flights = successive_flights.append(flights_from_ciy, ignore_index = True)
             # Si es el último viaje, coge los anteriores y conviértelo a una combinación
             if n_ciudades_a_visitar <= 1:
                 combination = compressFlightsToCombination()
