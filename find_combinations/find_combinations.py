@@ -28,9 +28,18 @@ def addDays(fecha,days):
   return datetime.datetime.strftime(fecha2, "%d/%m/%Y")
 
 
+def insertFlightInCombination(combinations_flights, flight):
+    combinations_flights["Price"] += flight["Price"]
+    combinations_flights["From"] = flight["From"]
+    for column in ["To", "Hour", "Date", "Id"]:
+        combinations_flights[column].insert(combinations_flights[column].tolist())
+    combinations_flights["Id"].insert(str(flight["Id"]).copy().replace("'","").replace(", ","%7C"))
+    route_columns = ['From', 'To', 'Date', 'Hour', 'Price']
+    combinations_flights["Route"].insert(flight[route_columns].values.tolist())
+    return combinations_flights
+    
 # Convertir todos los vuelos del DF de una combinación a una única fila
 def compressFlightsToCombination(combinations_flights):
-  #one_combination_flights = pd.DataFrame([],  columns = full_matrix.columns.values)
   compressed_combination = combinations_flights.loc[0].copy()
   string_columns = ["To", "Hour", "Date", "Id"]
   for column in string_columns:
