@@ -30,9 +30,9 @@ def addDays(fecha,days):
 def insertFlightInCombination(combinations_flights, flight):
     combinations_flights["Price"] += flight["Price"]
     combinations_flights["From"] = flight["From"]
-    for column in ["To", "Hour", "Date", "Id"]:
-        combinations_flights[column].insert(0, combinations_flights[column].tolist())
-    combinations_flights["Id"].replace("'","")
+    for column in ["To", "Hour", "Date"]:
+        combinations_flights[column].insert(0, combinations_flights[column])
+    combinations_flights["Id"].insert(0,flight["Id"].replace("'","") + "%7C")
     route_columns = ['From', 'To', 'Date', 'Hour', 'Price']
     combinations_flights["Route"].insert(0, flight[route_columns].values.tolist())
     return combinations_flights
@@ -95,7 +95,7 @@ def getInfoFromMatrix(full_matrix, print_allowed = False):
     return origen, destinos, len(fechas), fechas
 
  
-# Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
+# Función para encontrar el mejor trayecto utilizando el algoritmo recursivo-exhaustivo
 def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, n_combinaciones):
     assert n_ciudades_a_visitar >= 1, "No has elegido ninguna ciudad"
     print("\nWe start adventure from {} on {}, flying {} times between {} cities. Return the {} cheapest combinations".
@@ -130,11 +130,13 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
             successive_flights = pd.DataFrame([], columns = full_matrix.columns.values)
             for possible_flight in viajes_posibles.iterrows():
                 if possible_flight['To'] not in departure_cities:
+                    # Si no es el ultimo vuelo, 
                     previous_and_current_flights = previous_flights.append(possible_flight)
                     flights_from_ciy = findBestPathGlobMultiHandler(full_matrix, previous_and_current_flights, \
                                                                     departure_cities, possible_flight['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
+                    # inserta 'possible_flight' en la combinación que devuelva 'flights_from_ciy'
                     successive_flights = successive_flights.append(flights_from_ciy, ignore_index = True)
             # Si es el último viaje, coge los anteriores y conviértelo a una combinación
             if n_ciudades_a_visitar <= 1:
@@ -149,6 +151,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
     return findBestPathGlobMultiHandler(full_matrix, initial_flights, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas)
 
 
+# Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
 def findBestPathLocMulti(full_matrix, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas, pasajeros, n_combinaciones):
   n_viajes = n_ciudades_a_visitar + 1
   n_ciudades_a_elegir = len(ciudades_deseadas) #conjunto ciudades entre las que elegir
