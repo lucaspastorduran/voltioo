@@ -78,6 +78,7 @@ def convertCombinationDfToDict(combinations_df, passengers):
     }
   return combination_dict
 
+
 def getInfoFromMatrix(full_matrix, print_allowed = False):
     """
     Funcion para deducir los origen, destinos y fechas de una fullMatrix
@@ -100,6 +101,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
     assert n_ciudades_a_visitar >= 1, "No has elegido ninguna ciudad"
     print("\nWe start adventure from {} on {}, flying {} times between {} cities. Return the {} cheapest combinations".
           format(departure_cities, fechas[0], n_ciudades_a_visitar, ciudades_deseadas, n_combinaciones))
+    combination_columns = ['From', 'To', 'Date', 'Hour', 'Price', 'Id', 'Route']
     def findBestPathGlobMultiHandler(full_matrix, previous_flights, departure_cities, current_city, ciudades_deseadas, n_ciudades_a_visitar, fechas):
         current_date = fechas[0]
         print("\nStarting from {} on {}. W've seen {} cities and we can do {} flihts to desired cities and 1 to come back to departure.".
@@ -122,30 +124,31 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         if n_viajes_posibles <= 0:
             # Si no hay viajes posibles, devuelve DF vació y avis a anteriores llamadas que no guarden la combinación
             print("No flights found from {} on {}!".format(current_city, current_date))
-            return pd.DataFrame([], columns = full_matrix.columns.values)
+            return pd.DataFrame([], columns = combination_columns)
         else:
             # Si hay viajes posibles, haz la llamad recursiva de los siguientes
             viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
             print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
-            successive_flights = pd.DataFrame([], columns = full_matrix.columns.values)
+            combinations = pd.DataFrame([], columns = combination_columns)
             for possible_flight in viajes_posibles.iterrows():
-                if possible_flight['To'] not in departure_cities:
+                print("Checking successive combinations from:\n{}".format(possible_flight[1]))
+                print(type(possible_flight[1]))
+                if 1 == 1: #possible_flight['To'] not in departure_cities:
                     # Si no es el ultimo vuelo, 
-                    previous_and_current_flights = previous_flights.append(possible_flight)
-                    flights_from_ciy = findBestPathGlobMultiHandler(full_matrix, previous_and_current_flights, \
-                                                                    departure_cities, possible_flight['To'], \
+                    #previous_and_current_flights = previous_flights.append(possible_flight)
+                    next_combination = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight[1]['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
                     # inserta 'possible_flight' en la combinación que devuelva 'flights_from_ciy'
-                    successive_flights = successive_flights.append(flights_from_ciy, ignore_index = True)
+                    combinations.append(insertFlightInCombination(possible_flight, next_combination))
+                    #successive_flights.append(flights_from_ciy, ignore_index = True)
             # Si es el último viaje, coge los anteriores y conviértelo a una combinación
             if n_ciudades_a_visitar <= 1:
-                combination = compressFlightsToCombination()
-                print("Last flight possible, converted to combination:\n", combination)
-                return combination
+                print("Last flight possible, converted to combination:\n", combinations)
+                return combinations
             else:
-                print("Successive flights found:\n",successive_flights)
-                return viajes_posibles.append(successive_flights, ignore_index = True)
+                print("Successive flights found:\n",combinations)
+                return combinations
         print("All the flights found:\n", viajes_posibles)
     initial_flights = pd.DataFrame([], columns = full_matrix.columns.values)
     return findBestPathGlobMultiHandler(full_matrix, initial_flights, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas)
