@@ -28,6 +28,7 @@ def addDays(fecha,days):
   return datetime.datetime.strftime(fecha2, "%d/%m/%Y")
 
 def insertFlightInCombination(combinations_flights, flight):
+    print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
     combinations_flights["Price"] += flight["Price"]
     combinations_flights["From"] = flight["From"]
     for column in ["To", "Hour", "Date"]:
@@ -141,7 +142,9 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                     next_combination = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
-
+                    print("Next combination from {} we get:\n{}".format(current_city, next_combination))
+                    combinations.loc[-1] = insertFlightInCombination(next_combination, possible_flight)
+                    print("Combination after inserting current city {}:\n{}".format(current_city, combinations.loc[-1]))
             # devolver una combinacion: si es ultimo viaje hará append en empty DF
             
                 
