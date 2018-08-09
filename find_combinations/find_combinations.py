@@ -121,7 +121,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         else: 
             # Si no, exploramos todos los posibles viajes
             accepted_cities = [element in ciudades_deseadas for element in full_matrix['To']] 
-       # Mirar destinos posibles teniendo en cuenta lo anterior, la fecha y la ciudad actual
+        # Mirar destinos posibles teniendo en cuenta lo anterior, la fecha y la ciudad actual
         filas_viajes_posibles = ([city_from in current_city for city_from in full_matrix['From']] & \
                                    (full_matrix['Date'] == current_date) & accepted_cities)
         # Saca el df con todos los posibles destinos encontrados
@@ -135,8 +135,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
             viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
             print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
             combinations = pd.DataFrame([], columns = combination_columns)
-            if n_ciudades_a_visitar > 1:
-            #    if possible_flight['To'] not in departure_cities:
+            if n_ciudades_a_visitar > 1: #and possible_flight['To'] not in departure_cities:
                 # si todavía nos quedan viajes por hacer, hacer llamadas recursivas
                 for index_row_tuple in viajes_posibles.iterrows():
                     possible_flight = index_row_tuple[1]
@@ -160,8 +159,9 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                         print("Anything found in successive flights from {} on {}".format(current_city, current_date))
                     # Añade las combinaciones encontradas al resultado final
             else:
-                combin
-                combinations = pd.DataFrame([["",[], [] ]], columns = combination_columns), viajes_posibles
+                #empty_combination = 
+                #combinations = insertFlightInCombination(pd.DataFrame([["", [], [], [], 0, "", []]], columns = combination_columns), viajes_posibles)
+                combinations = insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), viajes_posibles)
             # devolver una combinacion: si es ultimo viaje hará append en empty DF
             print("Combinations found from {}:\n{}".format(current_city, combinations))
             return combinations
