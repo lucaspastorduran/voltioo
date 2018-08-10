@@ -135,9 +135,10 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
             viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
             print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
             combinations = pd.DataFrame([], columns = combination_columns)
-            if n_ciudades_a_visitar > 1: #and possible_flight['To'] not in departure_cities:
+            for index_row_tuple in viajes_posibles.iterrows():
+                if n_ciudades_a_visitar > 1: #and possible_flight['To'] not in departure_cities:
                 # si todavía nos quedan viajes por hacer, hacer llamadas recursivas
-                for index_row_tuple in viajes_posibles.iterrows():
+    
                     possible_flight = index_row_tuple[1]
                     print("Checking successive combinations from:\n{}".format(possible_flight))
                     # devuelve un DF con todas las combinaciones desde current_city
@@ -147,23 +148,25 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
                     print("Next {} combinations from {} are:\n{}".format(len(next_combinations), current_city, next_combinations))
                     # Añade la info de possible_flight a las siguientes combinaciones encontradas
-                    if len(next_combinations) > 0:
-                        for next_flight_tuple in next_combinations.iterrows():
-                            next_flight = next_flight_tuple[1]
-                            print("Appending next flight to final combinations found:\n{}".format(next_flight))
-                            combinations.append(insertFlightInCombination(next_flight, possible_flight), ignore_index = True)
-                            print("Combinations after next_flight appended:\n{}".format(combinations))
-                        combinations.loc[-1] = insertFlightInCombination(next_combinations, possible_flight)
-                        print("Combination after inserting current city {}:\n{}".format(current_city, combinations.loc[-1]))
-                    else:
-                        print("Anything found in successive flights from {} on {}".format(current_city, current_date))
-                    # Añade las combinaciones encontradas al resultado final
-            else:
-                #empty_combination = 
-                #combinations = insertFlightInCombination(pd.DataFrame([["", [], [], [], 0, "", []]], columns = combination_columns), viajes_posibles)
-                combinations = insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), viajes_posibles)
+                    # Merge next_combinations DF/Series with combinations
+                    combinations = combinations.append(next_combinations, ignore_index=True)
+                elif len(viajes_posibles) > 0:
+                    #combinations = insertFlightInCombination(pd.DataFrame([["", [], [], [], 0, "", []]], columns = combination_columns), viajes_posibles)
+                    combinations = insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), viajes_posibles)
+                else:
+                    print("Something strange happen.")
             # devolver una combinacion: si es ultimo viaje hará append en empty DF
-            print("Combinations found from {}:\n{}".format(current_city, combinations))
+            # insertar el vuelo actual en todas las combinacionas
+            if len(next_combinations) > 0:
+                for next_flight_tuple in next_combinations.iterrows():
+                    next_flight = next_flight_tuple[1]
+                    print("Appending next flight to final combinations found:\n{}".format(next_flight))
+                    combinations.append(insertFlightInCombination(next_flight, possible_flight), ignore_index = True)
+                    print("Combinations after next_flight appended:\n{}".format(combinations))
+                combinations.loc[-1] = insertFlightInCombination(next_combinations, possible_flight)
+                print("Combination after inserting current city {}:\n{}".format(current_city, combinations.loc[-1]))
+            else:
+                print("Anything found in successive flights from {} on {}".format(current_city, current_date))
             return combinations
         print("All the flights found:\n", viajes_posibles)
     #initial_flights = pd.DataFrame([], columns = full_matrix.columns.values)
