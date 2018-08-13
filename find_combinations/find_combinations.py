@@ -28,17 +28,21 @@ def addDays(fecha,days):
   return datetime.datetime.strftime(fecha2, "%d/%m/%Y")
 
 def insertFlightInCombination(combinations_flights, flight):
-    print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
+    #print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
     combinations_flights["Price"] += flight["Price"]
+    #print("Added {} to 'Price' colum. Result is: {}".format(flight['Price'], combinations_flights['Price']))
+    #print("Changing 'From' colum from '{}' to '{}'".format(combinations_flights["From"], flight["From"]))
     combinations_flights["From"] = flight["From"]
-    print("Combination after inserting Price and From:\n{}".format(combinations_flights))
     for column in ["To", "Hour", "Date"]:
-        print("Going to insert '{}' value into '{}' colum".format(flight[column], column))
         combinations_flights[column].insert(0, flight[column])
-    combinations_flights["Id"] = flight["Id"].replace("'","") + "%7C" + combinations_flights["Id"]
+        #print("Inserted '{}' into colum '{}'. Result is: {}".format(flight[column], column, combinations_flights[column]))
+    if combinations_flights["Id"] == "":
+        combinations_flights["Id"] = flight["Id"].replace("'","")
+    else:
+        combinations_flights["Id"] = flight["Id"].replace("'","") + "%7C" + combinations_flights["Id"]
     route_columns = ['From', 'To', 'Date', 'Hour', 'Price']
     combinations_flights["Route"].insert(0, flight[route_columns].values.tolist())
-    print("Combination after inserting all the flight info:\n".format(combinations_flights))
+    #print("Combination after inserting all the flight info:\n", combinations_flights)
     return combinations_flights
     
 # Convertir todos los vuelos del DF de una combinación a una única fila
@@ -136,6 +140,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
             combinations = pd.DataFrame([], columns = combination_columns)
             for index_row_tuple in viajes_posibles.iterrows():
                 possible_flight = index_row_tuple[1]
+                print()
                 if n_ciudades_a_visitar > 1: #and possible_flight['To'] not in departure_cities:
                     # si todavía nos quedan viajes por hacer, hacer llamadas recursivas
                     print("Checking successive combinations from:\n{}".format(possible_flight))
