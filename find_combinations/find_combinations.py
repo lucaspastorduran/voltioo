@@ -152,7 +152,7 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                     combinations = combinations.append(next_combinations, ignore_index=True)
                 elif len(viajes_posibles) > 0:
                     #combinations = insertFlightInCombination(pd.DataFrame([["", [], [], [], 0, "", []]], columns = combination_columns), viajes_posibles)
-                    combinations = insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), viajes_posibles)
+                    combinations = insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), viajes_posibles.iloc[0])
                 else:
                     print("Something strange happen.")
             # devolver una combinacion: si es ultimo viaje hará append en empty DF
