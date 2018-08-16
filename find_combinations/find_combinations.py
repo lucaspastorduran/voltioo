@@ -28,21 +28,21 @@ def addDays(fecha,days):
   return datetime.datetime.strftime(fecha2, "%d/%m/%Y")
 
 def insertFlightInCombination(combinations_flights, flight):
-    print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
-    combinations_flights["Price"] += flight["Price"]
-    print("Added {} to 'Price' colum. Result is: {}".format(flight['Price'], combinations_flights['Price']))
-    print("Changing 'From' colum from '{}' to '{}'".format(combinations_flights["From"], flight["From"]))
-    combinations_flights["From"] = flight["From"]
+    #print("Combination:\n{}\nFlight:\n{}".format(combinations_flights, flight))
+    combinations_flights.at["Price"] = combinations_flights["Price"] + flight["Price"]
+    #print("Added {} to 'Price' colum. Result is: {}".format(flight['Price'], combinations_flights['Price']))
+    #print("Changing 'From' colum from '{}' to '{}'".format(combinations_flights["From"], flight["From"]))
+    combinations_flights.at["From"] = flight["From"]
     for column in ["To", "Hour", "Date"]:
-        combinations_flights[column].insert(0, flight[column])
-        print("Inserted '{}' into colum '{}'. Result is: {}".format(flight[column], column, combinations_flights[column]))
+        combinations_flights.at[column].insert(0, flight[column])
+        #print("Inserted '{}' into colum '{}'. Result is: {}".format(flight[column], column, combinations_flights[column]))
     if combinations_flights["Id"] == "":
-        combinations_flights["Id"] = flight["Id"].replace("'","")
+        combinations_flights.at["Id"] = flight["Id"].replace("'","")
     else:
-        combinations_flights["Id"] = flight["Id"].replace("'","") + "%7C" + combinations_flights["Id"]
+        combinations_flights.at["Id"] = flight["Id"].replace("'","") + "%7C" + combinations_flights["Id"]
     route_columns = ['From', 'To', 'Date', 'Hour', 'Price']
-    combinations_flights["Route"].insert(0, flight[route_columns].values.tolist())
-    print("Combination after inserting all the flight info:\n", combinations_flights)
+    combinations_flights.at["Route"].insert(0, flight[route_columns].values.tolist())
+    #print("Combination after inserting all the flight info:\n", combinations_flights)
     return combinations_flights
     
 # Convertir todos los vuelos del DF de una combinación a una única fila
