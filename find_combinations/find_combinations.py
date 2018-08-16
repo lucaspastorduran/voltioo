@@ -112,15 +112,15 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
     combination_columns = ['From', 'To', 'Date', 'Hour', 'Price', 'Id', 'Route']
     def findBestPathGlobMultiHandler(full_matrix, departure_cities, current_city, ciudades_deseadas, n_ciudades_a_visitar, fechas):
         current_date = fechas[0]
-        print("\nStarting from {} on {}. We can do {} flihts to desired cities and 1 to come back to departure.".
-              format(current_city, current_date, n_ciudades_a_visitar-1))
+        #print("\nStarting from {} on {}. We can do {} flihts to desired cities and 1 to come back to departure.".
+        #      format(current_city, current_date, n_ciudades_a_visitar-1))
         if n_ciudades_a_visitar <= 0: 
             # Si ya no quedan viajes, se acaba
-            print("Flight from {} terminated as we have seen all the cities".format(current_city))
+            #print("Flight from {} terminated as we have seen all the cities".format(current_city))
             raise ValueError('You cannot request less than one city in FindBestPathGlob')
         elif n_ciudades_a_visitar == 1: 
             # Si es el último viaje volvemos al origen
-            print("It's the last flight. Must come back to {}".format(departure_cities))
+            #print("It's the last flight. Must come back to {}".format(departure_cities))
             accepted_cities = [element in departure_cities for element in full_matrix['To']]
         else: 
             # Si no, exploramos todos los posibles viajes
@@ -131,23 +131,23 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
         # Saca el df con todos los posibles destinos encontrados
         if np.sum(filas_viajes_posibles) <= 0:
             # Si no hay viajes posibles, devuelve DF vació y avis a anteriores llamadas que no guarden la combinación
-            print("No flights found from {} on {}!".format(current_city, current_date))
+            #print("No flights found from {} on {}!".format(current_city, current_date))
             return pd.DataFrame([], columns = combination_columns)
         else:
             # Si hay viajes posibles, haz la llamad recursiva de los siguientes
             viajes_posibles = full_matrix.loc[filas_viajes_posibles].sort_values('Price')
-            print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
+            #print("Flights found from {} on {}:\n{}".format(current_city, current_date, viajes_posibles))
             combinations = pd.DataFrame([], columns = combination_columns)
             for index_row_tuple in viajes_posibles.iterrows():
                 possible_flight = index_row_tuple[1]
                 if n_ciudades_a_visitar > 1: #and possible_flight['To'] not in departure_cities:
                     # si todavía nos quedan viajes por hacer, hacer llamadas recursivas
-                    print("Checking successive combinations from {} to {} on {}".format(current_city, possible_flight['To'], current_date))
+                    #print("Checking successive combinations from {} to {} on {}".format(current_city, possible_flight['To'], current_date))
                     # devuelve un DF con todas las combinaciones desde current_city
                     next_combinations = findBestPathGlobMultiHandler(full_matrix, departure_cities, possible_flight['To'], \
                                                                     [c for c in ciudades_deseadas if c not in current_city], \
                                                                     n_ciudades_a_visitar - 1, fechas[1:])
-                    print("{} combinations found from {} on {}:\n{}".format(len(next_combinations), current_city,current_date, next_combinations))
+                    #print("{} combinations found from {} on {}:\n{}".format(len(next_combinations), current_city,current_date, next_combinations))
                     # Merge next_combinations DF/Series with combinations
                     for row_index in range(len(next_combinations)):
                         combinations = combinations.append(insertFlightInCombination(next_combinations.iloc[row_index], possible_flight))
@@ -155,13 +155,13 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                     #combinations = combinations.append(insertFlightInCombination(next_combinations, possible_flight), ignore_index=True)
                 elif len(viajes_posibles) > 0:
                     # si es el último viaje (volver origen) no hacer más llamadas recursivas
-                    print("Comming back from {} to {} on {} because it's last flight".format(current_city, possible_flight['To'], current_date))
+                    #print("Comming back from {} to {} on {} because it's last flight".format(current_city, possible_flight['To'], current_date))
                     combinations = combinations.append(insertFlightInCombination(pd.Series(data = ["", [], [], [], 0, "", []], index = combination_columns), possible_flight), ignore_index=True)
                 else:
                     print("Something strange happened at line 157.")
-            print("All the next combinations found from {} on {} are:\n{}".format(current_city, current_date, combinations))
+            #print("All the next combinations found from {} on {} are:\n{}".format(current_city, current_date, combinations))
             return combinations
-        print("All the flights found:\n", viajes_posibles)
+        #print("All the flights found:\n", viajes_posibles)
     #initial_flights = pd.DataFrame([], columns = full_matrix.columns.values)
     return findBestPathGlobMultiHandler(full_matrix, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas).sort_values('Price')
 
