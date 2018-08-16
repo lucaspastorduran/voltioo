@@ -160,23 +160,10 @@ def findBestPathGlobMulti(full_matrix, departure_cities, ciudades_deseadas, n_ci
                 else:
                     print("Something strange happened at line 157.")
             print("All the next combinations found from {} on {} are:\n{}".format(current_city, current_date, combinations))
-            # insertar el vuelo actual en todas las combinaciones encontradas
-            """
-            if len(combinations) > 0:
-                for next_flight_tuple in next_combinations.iterrows():
-                    next_flight = next_flight_tuple[1]
-                    print("Appending next flight to final combinations found:\n{}".format(next_flight))
-                    combinations.append(insertFlightInCombination(next_flight, possible_flight), ignore_index = True)
-                    print("Combinations after next_flight appended:\n{}".format(combinations))
-                combinations.loc[-1] = insertFlightInCombination(next_combinations, possible_flight)
-                print("Combination after inserting current city {}:\n{}".format(current_city, combinations.loc[-1]))
-            else:
-                print("Anything found in successive flights from {} on {}".format(current_city, current_date))
-            """
             return combinations
         print("All the flights found:\n", viajes_posibles)
     #initial_flights = pd.DataFrame([], columns = full_matrix.columns.values)
-    return findBestPathGlobMultiHandler(full_matrix, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas)
+    return findBestPathGlobMultiHandler(full_matrix, departure_cities, departure_cities, ciudades_deseadas, n_ciudades_a_visitar, fechas).sort_values('Price')
 
 
 # Función para encontrar el mejor trayecto utilizando el algoritmo meta-heurístico
