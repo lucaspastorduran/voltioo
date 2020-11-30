@@ -5,4 +5,5 @@ este proyecto es para:
 - elegir la mejor combinación de generación de matriz y método de encontrar vuelos
 
 Flow del proceso de búsqueda de destinos:
-https://docs.google.com/drawings/d/1sI1epQ8jN12UcrWegqiqTL21Q5K0ErRDsEYqJkIxqdY/edit?usp=sharing
+![alt text](https://docs.google.com/drawings/d/1sI1epQ8jN12UcrWegqiqTL21Q5K0ErRDsEYqJkIxqdY/edit?usp=sharing)
+
